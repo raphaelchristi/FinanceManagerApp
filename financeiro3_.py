@@ -8,6 +8,8 @@ from kivy.uix.gridlayout import GridLayout
 import datetime
 import matplotlib.pyplot as plt
 from storage.storage import insert_data, select_data, delete_table
+from csvqueries.csvop import generate_csv_from_dict
+import json
 # Configuração de fonte e desativação do clipboard
 font_size = 24
 
@@ -50,11 +52,13 @@ class ExpenseScreen(Screen):
         self.register_button = Button(text="Registrar Gasto Diário", font_size=font_size)
         self.budget_label = Label(text="Orçamento Diário: $0", font_size=font_size)
         self.generate_report_button = Button(text="Gerar Relatório", font_size=font_size)
+        self.generate_csv_button = Button(text="Exportar para CSV", font_size=font_size)
         expense_input_layout.add_widget(self.partial_expense_input)
         expense_input_layout.add_widget(self.add_partial_button)
         expense_input_layout.add_widget(self.register_button)
         expense_input_layout.add_widget(self.budget_label)
         expense_input_layout.add_widget(self.generate_report_button)
+        expense_input_layout.add_widget(self.generate_csv_button)
 
         self.layout = GridLayout(cols=1)
         self.layout.add_widget(user_info_layout)
@@ -64,6 +68,7 @@ class ExpenseScreen(Screen):
         self.register_button.bind(on_release=self.register_expense)
         self.add_partial_button.bind(on_release=self.add_partial_expense)
         self.generate_report_button.bind(on_release=self.generate_report)
+        self.generate_csv_button.bind(on_release=self.generate_export_dataverse)
     
     def fill_app_data(self):
         content_data = {
@@ -91,6 +96,7 @@ class ExpenseScreen(Screen):
         }
         insert_data(content_data)
         self.fill_app_data()
+        
     def add_partial_expense(self, instance):
         partial_expense = float(self.partial_expense_input.text)
         app = App.get_running_app()
@@ -107,6 +113,14 @@ class ExpenseScreen(Screen):
     def generate_report(self, instance):
         app = App.get_running_app()
         app.generate_report()
+    def generate_export_dataverse(self,instance):
+        content_data = {
+            "table_name":"users",
+            "data_id":"objects"
+        }
+        select_rtn = select_data(content_data)
+        # dictionary = json.loads(select_rtn)
+        generate_csv_from_dict(select_rtn, "./output.csv")
 
 class FinanceManagerApp(App):
     user_info = {}
@@ -133,6 +147,7 @@ class FinanceManagerApp(App):
         plt.title('Relatório Financeiro Diário')
         plt.gcf().autofmt_xdate()
         plt.show()
+
 
 if __name__ == '__main__':
     FinanceManagerApp().run()
