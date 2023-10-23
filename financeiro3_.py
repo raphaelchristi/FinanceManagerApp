@@ -7,7 +7,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.gridlayout import GridLayout
 import datetime
 import matplotlib.pyplot as plt
-
+from storage.storage import insert_data, select_data, delete_table
 # Configuração de fonte e desativação do clipboard
 font_size = 24
 
@@ -64,16 +64,33 @@ class ExpenseScreen(Screen):
         self.register_button.bind(on_release=self.register_expense)
         self.add_partial_button.bind(on_release=self.add_partial_expense)
         self.generate_report_button.bind(on_release=self.generate_report)
-
+    
+    def fill_app_data(self):
+        content_data = {
+            "table_name":"users",
+            "data_id":"objects"
+        }
+        select_rtn = select_data(content_data)
+        self.name_label.text = select_rtn[0]["user_name"]
+        income = select_rtn[0]["mensal_income"]
+        self.budget = income / 30  # Reset the budget to the daily value
+        self.budget_label.text = f"Orçamento Diário: ${self.budget:.2f}"
+        self.income_label.text = f"${income:.2f}"
+    
     def on_enter(self):
         app = App.get_running_app()
         user_info = app.user_info
-        app.budget = user_info["income"] / 30  # Reset the budget to the daily value
-        self.budget_label.text = f"Orçamento Diário: ${app.budget:.2f}"
-
-        self.name_label.text = user_info["name"]
-        self.income_label.text = f"${user_info['income']:.2f}"
-
+        content_data = { "table_name": "users",
+                         "json_content": [         
+                                            {
+                                              "user_name": user_info["name"] ,
+                                              "mensal_income": user_info['income'],
+                                              "user_phone":"+5511999991234"
+                                            }
+                                         ]
+        }
+        insert_data(content_data)
+        self.fill_app_data()
     def add_partial_expense(self, instance):
         partial_expense = float(self.partial_expense_input.text)
         app = App.get_running_app()
